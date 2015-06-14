@@ -1,10 +1,13 @@
 /*
+	Modified spi_LTC1448 example for touch screens
+	based on ADS7843/XPT2045 controller: June 2015
+	by Vencislav Atanasov (user890104)
+
 	Updated for the new firmware: July 2012
 	by ihsan Kehribar <ihsan@kehribar.me>
 
 	Created: December 2011
 	by ihsan Kehribar <ihsan@kehribar.me>
-	
 */
 
 #include <stdio.h>
