@@ -2,6 +2,9 @@
 
 *.dSYM
 *.o
+*.exe
+*.elf
+*.hex
 
 software/adc
 software/blink
