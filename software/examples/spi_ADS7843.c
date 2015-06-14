@@ -16,9 +16,7 @@
 #include "littleWire_util.h"
 
 unsigned char version;
-unsigned char sendBuffer[4];
-unsigned char receiveBuffer[4];	
-unsigned char *touchX, *touchY;
+unsigned short touchX, touchY;
 
 #define CMD_START 0x80
 #define CMD_A2 0x40
@@ -31,17 +29,40 @@ unsigned char *touchX, *touchY;
 #define CMD_PD1 0x02
 #define CMD_PD0 0x01
 
-#define CMD_BASE CMD_START | CMD_MODE_8BIT | CMD_REF_SINGLE
+#define CMD_BASE CMD_START | CMD_MODE_12BIT | CMD_REF_SINGLE
 
 // CALIBRATION DETAILS, TOUCH PANEL SPECIFIC
 // FIND THE EDGE VALUES FOR YOUR PANEL, THEN SET THEM HERE
-#define TS_TOP 0x0c
-#define TS_BOTTOM 0x6f
-#define TS_LEFT 0x0a
-#define TS_RIGHT 0x75
+#define TS_TOP 0x1bf
+#define TS_BOTTOM 0xd7f
+#define TS_LEFT 0x1b0
+#define TS_RIGHT 0xe3c
+
+unsigned short readData(littleWire *lw, unsigned char cmd) {
+	unsigned char sendBuffer[3];
+	unsigned char receiveBuffer[3];	
+	
+	sendBuffer[0] = CMD_BASE | cmd;
+	sendBuffer[1] = 0;
+	sendBuffer[2] = 0;
+	
+	spi_sendMessage(lw, sendBuffer, receiveBuffer, 3, MANUAL_CS);
+	
+	if (lwStatus < 0)
+	{
+		printf("> lwStatus: %d\n",lwStatus);
+		printf("> Connection error!\n");
+		exit(EXIT_FAILURE);
+	}
+	
+	return receiveBuffer[1] << 5 | receiveBuffer[2] >> 3;
+}
 
 int main()
-{	
+{
+	// disable stdout buffering
+	setbuf(stdout, NULL);
+	
 	littleWire *lw = NULL;
 
 	lw = littleWire_connect();
@@ -61,42 +82,33 @@ int main()
 	}
 	
 	spi_init(lw);
-	
 	spi_updateDelay(lw, 0);
 	
-	sendBuffer[0] = CMD_BASE | CMD_A0;
-	sendBuffer[1] = 0;
-	sendBuffer[2] = CMD_BASE | CMD_A2 | CMD_A0;
-	sendBuffer[3] = 0;
-	
-	for(;;)
+	while (1)
 	{
-		spi_sendMessage(lw, sendBuffer, receiveBuffer, 4, MANUAL_CS);
+		// TODO: can be combined in a single transfer
+		touchX = readData(lw, CMD_A0);
+		touchY = readData(lw, CMD_A2 | CMD_A0);
 		
-		if (lwStatus < 0)
-		{
-			printf("> lwStatus: %d\n",lwStatus);
-			printf("> Connection error!\n");
-			exit(EXIT_FAILURE);
-		}
-		
-		touchX = receiveBuffer + 1;
-		touchY = receiveBuffer + 3;
-		
-		//printf("0x%02x 0x%02x\n", *touchX, *touchY);
-		
-		if (*touchX == 0x7f && *touchY == 0x00) {
+		// These values mean "no pen touches the screen"
+		if (touchX == 0xfff && touchY == 0x00) {
 			continue;
 		}
-		
-		if (*touchX < TS_LEFT || *touchX > TS_RIGHT || *touchY < TS_TOP || *touchY > TS_BOTTOM) {
+
+		if (touchX < TS_LEFT || touchX > TS_RIGHT || touchY < TS_TOP || touchY > TS_BOTTOM) {
+			// maybe show warning about value out of range?
 			continue;
 		}
-		
-		printf(
-			"X: %03u Y: %03u\n",
-			320 * (*touchX - TS_LEFT) / (TS_RIGHT - TS_LEFT),
-			240 * (*touchY - TS_TOP) / (TS_BOTTOM - TS_TOP)
-		);
+
+		if (printf(
+			"%u %u\r\n",
+			320 * (touchX - TS_LEFT) / (TS_RIGHT - TS_LEFT),
+			240 * (touchY - TS_TOP) / (TS_BOTTOM - TS_TOP)
+		) < 0) {
+			// exit on stdout pipe closed
+			break;
+		}
 	}
+	
+	return 0;
 }
