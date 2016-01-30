@@ -15,6 +15,8 @@
 #include "littleWire.h"
 #include "littleWire_util.h"
 
+#include "spi.h"
+
 unsigned char version;
 unsigned short touchX, touchY;
 
@@ -38,15 +40,18 @@ unsigned short touchX, touchY;
 #define TS_LEFT 0x1b0
 #define TS_RIGHT 0xe3c
 
-unsigned short readData(littleWire *lw, unsigned char cmd) {
-	unsigned char sendBuffer[3];
-	unsigned char receiveBuffer[3];	
+unsigned short readData(littleWire *lw, unsigned short *touchX, unsigned short *touchY) {
+	unsigned char sendData[6];
+	unsigned char recvData[6];
 	
-	sendBuffer[0] = CMD_BASE | cmd;
-	sendBuffer[1] = 0;
-	sendBuffer[2] = 0;
+	sendData[0] = CMD_BASE | CMD_A0;
+	sendData[1] = 0;
+	sendData[2] = 0;
+	sendData[3] = CMD_BASE | CMD_A2 | CMD_A0;
+	sendData[4] = 0;
+	sendData[5] = 0;
 	
-	spi_sendMessage(lw, sendBuffer, receiveBuffer, 3, MANUAL_CS);
+	spi_rw(lw, sendData, recvData, 6);
 	
 	if (lwStatus < 0)
 	{
@@ -55,7 +60,8 @@ unsigned short readData(littleWire *lw, unsigned char cmd) {
 		exit(EXIT_FAILURE);
 	}
 	
-	return receiveBuffer[1] << 5 | receiveBuffer[2] >> 3;
+	*touchX = recvData[1] << 5 | recvData[2] >> 3;
+	*touchY = recvData[4] << 5 | recvData[5] >> 3;
 }
 
 int main()
@@ -86,9 +92,7 @@ int main()
 	
 	while (1)
 	{
-		// TODO: can be combined in a single transfer
-		touchX = readData(lw, CMD_A0);
-		touchY = readData(lw, CMD_A2 | CMD_A0);
+		readData(lw, &touchX, &touchY);
 		
 		// These values mean "no pen touches the screen"
 		if (touchX == 0xfff && touchY == 0x00) {
