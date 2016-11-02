@@ -19,6 +19,7 @@
 
 unsigned char version;
 unsigned short touchX, touchY;
+unsigned char penDown;
 
 #define CMD_START 0x80
 #define CMD_A2 0x40
@@ -96,12 +97,21 @@ int main()
 		
 		// These values mean "no pen touches the screen"
 		if (touchX == 0xfff && touchY == 0x00) {
+			if (penDown) {
+				puts("END");
+				penDown = 0;
+			}
 			continue;
 		}
 
 		if (touchX < TS_LEFT || touchX > TS_RIGHT || touchY < TS_TOP || touchY > TS_BOTTOM) {
 			// maybe show warning about value out of range?
 			continue;
+		}
+		
+		if (!penDown) {
+			puts("START");
+			penDown = 1;
 		}
 
 		if (printf(
