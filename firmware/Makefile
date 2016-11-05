@@ -18,7 +18,7 @@ CFLAGS  = -Iusbdrv -I. -DDEBUG_LEVEL=0
 CFLAGS += -Wno-deprecated-declarations -D__PROG_TYPES_COMPAT__
 CFLAGS += -Wl,--gc-sections
 CFLAGS += -fdata-sections -ffunction-sections
-OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o 
+OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o osccalASM.o
 COMPILE = avr-gcc -Wall -Os --std=gnu99 -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
 # symbolic targets:
