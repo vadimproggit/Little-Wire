@@ -48,10 +48,10 @@ int main(int argc, char **argv)
 		return 0;
 	}
 	
-	float voltage = (float)adcValue * 5000 / 1024.0;
+	float percent = (float)adcValue * 100 / 1024.0;
 
-	fprintf(stderr, "> Value: %X\tVoltage: %f milivolts\n", adcValue, voltage);
-	printf("%f\n", voltage);
+	fprintf(stderr, "> Value: %X / %f%%\n", adcValue, percent);
+	printf("%f\n", percent);
 	
 	return 0;
 }
