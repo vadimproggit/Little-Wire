@@ -35,25 +35,23 @@ int main(int argc, char **argv)
 	
 	analog_init(lw, VREF_VCC);
 
-	while(1) {
-		digitalWrite(lw, PIN4, HIGH);
-		delay(1000);
-		
-		unsigned int adcValue = analogRead(lw, ADC_PIN2);
-		
-		digitalWrite(lw, PIN4, LOW);
-		
-		float voltage = (float)adcValue * 5000 / 1024.0;
+	digitalWrite(lw, PIN4, HIGH);
+	delay(1000);
 	
-		fprintf(stderr, "> Value: %X\tVoltage: %f milivolts\n", adcValue, voltage);
-		printf("%f\n", voltage);
-		
-		if (lwStatus < 0) {
-			fprintf(stderr, "> lwStatus: %d\n",lwStatus);
-			fprintf(stderr, "> Connection error!");
-			return 0;
-		}
-		
-		delay(1000);
+	unsigned int adcValue = analogRead(lw, ADC_PIN2);
+	
+	digitalWrite(lw, PIN4, LOW);
+	
+	if (lwStatus < 0) {
+		fprintf(stderr, "> lwStatus: %d\n", lwStatus);
+		fprintf(stderr, "> Connection error!");
+		return 0;
 	}
+	
+	float voltage = (float)adcValue * 5000 / 1024.0;
+
+	fprintf(stderr, "> Value: %X\tVoltage: %f milivolts\n", adcValue, voltage);
+	printf("%f\n", voltage);
+	
+	return 0;
 }
