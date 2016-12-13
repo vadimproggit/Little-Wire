@@ -1,4 +1,10 @@
+#include <string.h>
+
 #include "spi.h"
+
+#ifndef min
+#define min(a,b) (((a)<(b))?(a):(b))
+#endif
 
 void spi_rw(littleWire *lw, unsigned char *sendData, unsigned char *recvData, size_t len) {
 	unsigned char sendBuf[4];
